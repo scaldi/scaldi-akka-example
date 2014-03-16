@@ -7,6 +7,9 @@ import akka.actor.{Inbox, ActorSystem}
 import scaldi.akka.AkkaInjectable
 import scala.concurrent.duration._
 
+// Please note, that actors must always be bound with `toProvider`!
+// This will make sure, that each time Akka asks Scaldi for some particular
+// Actor, it will always get the new instance of it.
 class OrderModule extends Module {
   binding toProvider new Receptionist
   binding toProvider new OrderProcessor
