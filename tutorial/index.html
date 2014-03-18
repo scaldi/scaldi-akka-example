@@ -6,6 +6,68 @@
     <title>An example of Akka application that uses Scaldi for dependency injection</title>
 </head>
 <body>
+<div>
     <h3>An example of Akka application that uses Scaldi for dependency injection</h3>
+
+    <p>Akka integration has not much to add to the core library in order to smoothly integration with it. In order to use it you need to add <code>scaldi-akka</code> to the SBT build, so let's do this first:</p>
+
+    <pre><code>libraryDependencies ++= Seq(
+    "org.scaldi" %% "scaldi-akka" % "0.3.1"
+)
+</code></pre>
+
+    <p>Now you should be ready to go. The only new thing that <code>scaldi-akka</code> adds is <code>AkkaInjectable</code>, which provides 2 additional inject methods:</p>
+
+    <ul>
+        <li><code>injectActorRef</code> - creates a new actor with the help of <code>ActorRef</code> factory which should be implicitly available in the scope.</li>
+        <li><code>injectActorProps</code> - injects <code>Props</code> for the <code>Actor</code>, so that you can create new <code>Actor</code>s yourself with the help of the <code>ActorRef</code> factory.</li>
+    </ul>
+
+    <p>If you still wondering what <code>Injectable</code> actually is, I can recommend you to read <a href="http://hacking-scala.org/post/51407241538/easy-dependency-injection-in-play-framework-with-scaldi">one of my previous posts</a>. It explains the basic concepts of the library and shows an example application that uses Scaldi for the dependency injection. </p>
+    <p>I mentioned <code>ActorRef</code> factory above. It can be one of two things:</p>
+
+    <ul>
+        <li><code>ActorContext</code> - it always implicitly available within an <code>Actor</code> and can be used to create a new actors in the context of current actor</li>
+        <li><code>ActorSystem</code></li>
+    </ul>
+
+    <p>Here is a small example of how you can use <code>AkkaInjectable</code> to inject (which actually means create in case of actors) another actor:</p>
+
+<pre><code>class Receptionist (implicit inj: Injector) extends Actor with AkkaInjectable {
+    val userService = inject [UserService]
+
+    val orderProcessorProps = injectActorProps [OrderProcessor]
+    val priceCalculator = injectActorRef [PriceCalculator]
+
+    def receive = {
+        case PlaceOrder(userName, itemId, netAmount) =&gt;
+            val processor = context.actorOf(orderProcessorProps)
+            // ...
+    }
+}
+</code></pre>
+
+    <p>Or alternatively, if you want to create an actor somewhere else (not inside an actor), you need to provide an implicit <code>ActorSystem</code> in the scope:</p>
+
+<pre><code>import scaldi.akka.AkkaInjectable._
+
+implicit val appModule: Injector = // ...
+
+implicit val system = inject [ActorSystem]
+
+val receptionist = injectActorRef [Receptionist]
+</code></pre>
+
+    <p>So far so good. We have created some actors that are able to use <code>inject</code>. The only thing that remains now is to create a module that binds them together with other dependencies and the <code>ActorSysyem</code> itself:</p>
+    <p>class OrderModule extends Module {
+        bind [UserService] to new SimpleUserService</p>
+    <p>bind [ActorSystem] to ActorSystem(&quot;ScaldiExample&quot;) destroyWith (_.shutdown())</p>
+    <p>binding toProvider new Receptionist
+        binding toProvider new OrderProcessor
+        binding toProvider new PriceCalculator
+        }</p>
+    <p>As you can see, now you also can define how binding can be destroyed with the <code>destroyWith</code> function. It is part of the binding lifecycle feature that was introduced in Scaldi version 0.3.</p>
+    <p>At this point I would like to point out how <code>Actor</code> are bound. It is important, that you bind then with <code>toProvider</code> function. It will make sure, that Scaldi always creates new instances of the <code>Actor</code> classes when you injecting them with <code>injectActorRef</code> or <code>injectActorProps</code>. These two methods actually use Akka mechanisms to configure an actor instance under-the-hood, but the actor instance creation itself is always delegated to Scaldi. During this process, Akka requires the delegate to always create new instances of an actor, so by binding <code>Actor</code>s with <code>toProvider</code> you are fulfilling the protocol, that Akka implies.</p>
+</div>
 </body>
 </html>
