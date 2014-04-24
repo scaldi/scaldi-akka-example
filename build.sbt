@@ -6,7 +6,7 @@ scalaVersion := "2.11.0"
  
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.2",
-  "org.scaldi" %% "scaldi-akka" % "0.3.2",
+  "org.scaldi" %% "scaldi-akka" % "0.3.3",
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
 )
 
