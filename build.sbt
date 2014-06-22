@@ -2,11 +2,11 @@ name := "scaldi-akka-example"
  
 version := "1.0-SNAPSHOT"
  
-scalaVersion := "2.11.0"
+scalaVersion := "2.11.1"
  
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.3.2",
-  "org.scaldi" %% "scaldi-akka" % "0.3.3",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.3",
+  "org.scaldi" %% "scaldi-akka" % "0.4",
   "org.scala-lang" % "scala-reflect" % scalaVersion.value
 )
 
